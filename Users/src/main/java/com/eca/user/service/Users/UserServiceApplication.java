@@ -18,8 +18,24 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.eca.user.service.Users.cache.CustomKeyGenerator;
 
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
+import io.swagger.v3.oas.annotations.info.Info;
+import io.swagger.v3.oas.annotations.servers.Server;
+
 @SpringBootApplication
 @EnableCaching
+@OpenAPIDefinition(
+    info = @Info (
+        title = "User Service Application",
+        version = "1.0"
+    ),
+    servers = {
+		@Server (
+			description = "Local Env",
+			url = "http://localhost:8081"
+		)
+	}
+)
 public class UserServiceApplication implements CachingConfigurer {
 
 	public static void main(String[] args) {

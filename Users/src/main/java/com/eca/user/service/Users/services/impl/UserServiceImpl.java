@@ -45,7 +45,8 @@ public class UserServiceImpl implements UserService{
     public List<User> getAllUsers() {
         List<User> users = userRepository.findAll();
         users.forEach((user) -> {
-            Rating[] ratingsPerUserId = webClientBuilder.build().get().uri("http://RATING-SERVICE/ratings/users/" + user.getUserId()).retrieve().bodyToMono(Rating[].class).block();
+            Rating[] ratingsPerUserId = restTemplate.getForObject("http://RATING-SERVICE/ratings/users/" + user.getUserId(), Rating[].class);
+            // Rating[] ratingsPerUserId = webClientBuilder.build().get().uri("http://RATING-SERVICE/ratings/users/" + user.getUserId()).retrieve().bodyToMono(Rating[].class).block();
             List<Rating> ratings = Arrays.asList(ratingsPerUserId);
 
             List<Rating> ratingsList = ratings.stream().map((r) -> {
@@ -64,8 +65,8 @@ public class UserServiceImpl implements UserService{
         User user = userRepository.findById(userId)
         .orElseThrow(() -> new ResourceNotFoundException("User with given Id doesn't exist: " + userId));
 
-        // Rating[] ratingsPerUserId = restTemplate.getForObject("http://RATING-SERVICE/ratings/users/" + userId, Rating[].class);
-        Rating[] ratingsPerUserId = webClientBuilder.build().get().uri("http://RATING-SERVICE/ratings/users/" + userId).retrieve().bodyToMono(Rating[].class).block();
+        Rating[] ratingsPerUserId = restTemplate.getForObject("http://RATING-SERVICE/ratings/users/" + userId, Rating[].class);
+        // Rating[] ratingsPerUserId = webClientBuilder.build().get().uri("http://RATING-SERVICE/ratings/users/" + userId).retrieve().bodyToMono(Rating[].class).block();
         List<Rating> ratings = Arrays.asList(ratingsPerUserId);
 
         List<Rating> ratingsList = ratings.stream().map((r) -> {
