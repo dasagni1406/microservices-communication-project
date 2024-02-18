@@ -1,10 +1,5 @@
 package com.eca.user.service.UserService;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -62,7 +57,7 @@ public class UserServiceApplicationTests {
 	@Before
 	public void setup() {
 		MockitoAnnotations.openMocks(this);
-		this.mockMvc = MockMvcBuilders.standaloneSetup(UserServiceImpl.class).build();
+		this.mockMvc = MockMvcBuilders.standaloneSetup(userServiceImpl).build();
 	}
 
 	@Test
@@ -148,9 +143,9 @@ public class UserServiceApplicationTests {
 		Mockito.when(userRepository.findById("nonExistentId")).thenReturn(Optional.empty());
 		try {
 			userServiceImpl.getUser("nonExistentId");
-			fail("Exception not thrown");
+			Assert.fail("Exception not thrown");
 		} catch (ResourceNotFoundException e) {
-			assertEquals("User with given Id doesn't exist: nonExistentId", e.getMessage());
+			Assert.assertEquals("User with given Id doesn't exist: nonExistentId", e.getMessage());
 		}
 	}
 
