@@ -6,9 +6,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.aspectj.lang.annotation.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -32,7 +33,9 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 
 @RunWith(MockitoJUnitRunner.class)
 public class UserServiceApplicationTests {
+
 	private MockMvc mockMvc;
+
 	ObjectMapper objectMapper = new ObjectMapper();
 	ObjectWriter objectWriter = objectMapper.writer();
 
@@ -45,14 +48,14 @@ public class UserServiceApplicationTests {
 	@InjectMocks
 	private UserServiceImpl userServiceImpl;
 
-	User userOne = new User("u1", "nameOne", "emailOne", "aboutUserOne", null);
-	User userTwo = new User("u2", "nameTwo", "emailTwo", "aboutUserTwo", null);
+	User userOne = new User("u1", "nameOne", "emailOne", "aboutOne", null);
+	User userTwo = new User("u2", "nameTwo", "emailTwo", "aboutTwo", null);
 
 	Hotel hotelOne = new Hotel("h1", "hotelOne", "locOne", "aboutHotelOne");
 	Hotel hotelTwo = new Hotel("h2", "hotelTwo", "locTwo", "aboutHotelTwo");
 
-	Rating ratingOne = new Rating("r1", "u1", "h1", 9, "feedOne", null);
-	Rating ratingTwo = new Rating("r2", "u2", "h2", 8, "feedTwo", null);
+	Rating ratingOne = new Rating("r1", "u1", "h1", 10, "feedbackOne", null);
+	Rating ratingTwo = new Rating("r2", "u2", "h2", 8, "feedbackTwo", null);
 
 	@Before
 	public void setup() {
@@ -61,7 +64,8 @@ public class UserServiceApplicationTests {
 	}
 
 	@Test
-	public void saveUser_success() {
+	public void saveUser_success() throws Exception {
+
 		Mockito.when(userRepository.save(userOne)).thenReturn(userOne);
 		User savedUser = userServiceImpl.saveUser(userOne);
 
@@ -75,39 +79,6 @@ public class UserServiceApplicationTests {
 	}
 
 	@Test
-	public void getAllUsers_success() {
-		List<User> mockUsers = Arrays.asList(userOne, userTwo);
-		Mockito.when(userRepository.findAll()).thenReturn(mockUsers);
-
-		Rating[] ratingOneArray = new Rating[] { ratingOne };
-		Rating[] ratingTwoArray = new Rating[] { ratingTwo };
-		Mockito.when(restTemplate.getForObject("http://RATING-SERVICE/ratings/users/u1", Rating[].class))
-				.thenReturn(ratingOneArray);
-		Mockito.when(restTemplate.getForObject("http://RATING-SERVICE/ratings/users/u2", Rating[].class))
-				.thenReturn(ratingTwoArray);
-
-		Mockito.when(restTemplate.getForEntity("http://HOTEL-SERVICE/hotels/h1", Hotel.class))
-				.thenReturn(new ResponseEntity<>(hotelOne, HttpStatus.OK));
-		Mockito.when(restTemplate.getForEntity("http://HOTEL-SERVICE/hotels/h2", Hotel.class))
-				.thenReturn(new ResponseEntity<>(hotelTwo, HttpStatus.OK));
-
-		ratingOne.setHotel(hotelOne);
-		ratingTwo.setHotel(hotelTwo);
-		List<Rating> ratingOneList = new ArrayList<>(Arrays.asList(ratingOneArray));
-		List<Rating> ratingTwoList = new ArrayList<>(Arrays.asList(ratingTwoArray));
-		userOne.setRatings(ratingOneList);
-		userTwo.setRatings(ratingTwoList);
-
-		List<User> users = userServiceImpl.getAllUsers();
-
-		Assert.assertEquals(2, users.size());
-		Assert.assertEquals(ratingOneList.get(0), users.get(0).getRatings().get(0));
-		Assert.assertEquals(ratingOneList.get(0).getHotel(), users.get(0).getRatings().get(0).getHotel());
-		Assert.assertEquals(ratingTwoList.get(0), users.get(1).getRatings().get(0));
-		Assert.assertEquals(ratingTwoList.get(0).getHotel(), users.get(1).getRatings().get(0).getHotel());
-	}
-
-	@Test
 	public void getAllUsers_emptyList() {
 		Mockito.when(userRepository.findAll()).thenReturn(Collections.emptyList());
 		List<User> users = userServiceImpl.getAllUsers();
@@ -115,12 +86,19 @@ public class UserServiceApplicationTests {
 	}
 
 	@Test
-	public void getUser_success() {
-		Mockito.when(userRepository.findById("user1")).thenReturn(Optional.of(userOne));
+	public void getAllUsers_success() {
+		// Mock user repository
+		List<User> mockUsers = Arrays.asList(userOne, userTwo);
+		Mockito.when(userRepository.findAll()).thenReturn(mockUsers);
 
-		Rating[] ratingArray = new Rating[] { ratingOne };
+		// Mock rating service
+		Rating[] arrayRatingOne = new Rating[] { ratingOne };
+		Rating[] arrayRatingTwo = new Rating[] { ratingTwo };
+
 		Mockito.when(restTemplate.getForObject("http://RATING-SERVICE/ratings/users/u1", Rating[].class))
-				.thenReturn(ratingArray);
+				.thenReturn(arrayRatingOne);
+		Mockito.when(restTemplate.getForObject("http://RATING-SERVICE/ratings/users/u2", Rating[].class))
+				.thenReturn(arrayRatingTwo);
 
 		Mockito.when(restTemplate.getForEntity("http://HOTEL-SERVICE/hotels/h1", Hotel.class))
 				.thenReturn(new ResponseEntity<>(hotelOne, HttpStatus.OK));
@@ -128,9 +106,39 @@ public class UserServiceApplicationTests {
 				.thenReturn(new ResponseEntity<>(hotelTwo, HttpStatus.OK));
 
 		ratingOne.setHotel(hotelOne);
+		List<Rating> ratingListOne = new ArrayList<>(Arrays.asList(ratingOne));
+		userOne.setRatings(ratingListOne);
+
+		ratingTwo.setHotel(hotelTwo);
+		List<Rating> ratingListTwo = new ArrayList<>(Arrays.asList(ratingTwo));
+		userOne.setRatings(ratingListTwo);
+
+		List<User> users = userServiceImpl.getAllUsers();
+
+		Assert.assertEquals(2, users.size());
+
+		Assert.assertEquals(ratingListOne.get(0), users.get(0).getRatings().get(0));
+		Assert.assertEquals(ratingListOne.get(0).getHotel(), users.get(0).getRatings().get(0).getHotel());
+
+		Assert.assertEquals(ratingListTwo.get(0), users.get(1).getRatings().get(0));
+		Assert.assertEquals(ratingListTwo.get(0).getHotel(), users.get(1).getRatings().get(0).getHotel());
+	}
+
+	@Test
+	public void testGetUserWithRatingsAndHotels() {
+		// Mock user repository
+		Rating[] ratingArray = new Rating[] { ratingOne };
+		Mockito.when(userRepository.findById("u1")).thenReturn(Optional.of(userOne));
+
+		Mockito.when(restTemplate.getForObject("http://RATING-SERVICE/ratings/users/u1", Rating[].class))
+				.thenReturn(ratingArray);
+
+		Mockito.when(restTemplate.getForEntity("http://HOTEL-SERVICE/hotels/h1", Hotel.class))
+				.thenReturn(new ResponseEntity<>(hotelOne, HttpStatus.OK));
+
+		ratingOne.setHotel(hotelOne);
 		List<Rating> ratingList = new ArrayList<>(Arrays.asList(ratingOne));
 		userOne.setRatings(ratingList);
-
 		User user = userServiceImpl.getUser("u1");
 
 		Assert.assertNotNull(user);
@@ -139,7 +147,7 @@ public class UserServiceApplicationTests {
 	}
 
 	@Test
-	public void getUser_not_found() {
+	public void testGetUserNotFound() {
 		Mockito.when(userRepository.findById("nonExistentId")).thenReturn(Optional.empty());
 		try {
 			userServiceImpl.getUser("nonExistentId");
@@ -148,5 +156,4 @@ public class UserServiceApplicationTests {
 			Assert.assertEquals("User with given Id doesn't exist: nonExistentId", e.getMessage());
 		}
 	}
-
 }
